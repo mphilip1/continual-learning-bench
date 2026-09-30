@@ -264,7 +264,7 @@ def test_evaluator_initializer_applies_official_test_patch(monkeypatch):
     assert applied_patches == ["OFFICIAL TEST PATCH"]
 
 
-def test_actor_workspace_uses_base_tree_initializer(monkeypatch):
+def test_unsanitized_actor_workspace_uses_base_tree_initializer(monkeypatch):
     from src.tasks.codebase_adaptation import task as task_module
 
     calls: list[tuple[str, dict]] = []
@@ -274,7 +274,7 @@ def test_actor_workspace_uses_base_tree_initializer(monkeypatch):
         lambda container_id, instance: calls.append((container_id, instance)),
     )
 
-    task = task_module.CodebaseAdaptationTask()
+    task = task_module.CodebaseAdaptationTask(sanitize_actor_workspace=False)
     task._env = SimpleNamespace(container_id="cid")
     instance = SimpleNamespace(
         instance_id="example__repo-1",

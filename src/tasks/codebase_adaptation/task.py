@@ -47,6 +47,7 @@ from .generic_runtime import (
     instance_cwd,
     is_generic_pr_instance,
 )
+from .sanitized_runtime import initialize_sanitized_actor_container
 from .task_loader import TaskInstance, load_tasks
 from .prompts import _SYSTEM_TEMPLATE, _INSTANCE_TEMPLATE
 
@@ -160,6 +161,7 @@ class CodebaseAdaptationTask(ContinualLearningTask):
         same_repo: bool = True,
         variant: Optional[str] = None,
         schedule: Optional[str] = None,
+        sanitize_actor_workspace: bool = True,
     ):
         self.variant = variant
         self.schedule = schedule
@@ -296,6 +298,7 @@ class CodebaseAdaptationTask(ContinualLearningTask):
 
         self.repo_filter = repo_filter
         self.seed = seed
+        self.sanitize_actor_workspace = sanitize_actor_workspace
 
         self.instances: list[TaskInstance] = []
         self.current_issue_idx = 0
@@ -741,10 +744,12 @@ class CodebaseAdaptationTask(ContinualLearningTask):
             raise RuntimeError("No active container available for generic PR init")
 
         try:
-            initialize_generic_pr_base_tree(
-                self._env.container_id,
-                instance.raw_data,
+            initializer = (
+                initialize_sanitized_actor_container
+                if self.sanitize_actor_workspace
+                else initialize_generic_pr_base_tree
             )
+            initializer(self._env.container_id, instance.raw_data)
             logger.info(f"Initialized generic PR workspace for {instance.instance_id}")
         except Exception as exc:
             logger.error(
